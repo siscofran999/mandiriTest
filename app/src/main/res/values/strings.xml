@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Mandiri</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="label_discover">Discover</string>
+    <string name="label_detail">Detail</string>
+    <string name="see_all_review">See All Review</string>
+    <string name="label_reviews">Reviews</string>
+</resources>
