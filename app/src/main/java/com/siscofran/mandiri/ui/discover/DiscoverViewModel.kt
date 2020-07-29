@@ -2,16 +2,14 @@ package com.siscofran.mandiri.ui.discover
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.siscofran.mandiri.data.ApiRepository
 import com.siscofran.mandiri.data.model.Result
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class DiscoverViewModel @Inject constructor(private val apiRepository: ApiRepository) : ViewModel() {
 
-    private val compositeDisposable: CompositeDisposable = CompositeDisposable()
     private val error = MutableLiveData<String>()
     private val discover = MutableLiveData<ArrayList<Result>>()
     private val page = MutableLiveData<Int>()
@@ -19,34 +17,29 @@ class DiscoverViewModel @Inject constructor(private val apiRepository: ApiReposi
 
     fun getDiscover(idGenre: Int) {
         page.value = 1
-        compositeDisposable.add(apiRepository.getDiscover(idGenre, page.value?.toInt()!!)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                discover.value = it.results
-            },{
-                error.value = it.message
-            }))
+
+        viewModelScope.launch {
+            runCatching {
+                discover.value = apiRepository.getDiscover(idGenre, page.value?.toInt()!!).results
+            }.onFailure(::handleFailure)
+        }
     }
 
     fun loadMore(idGenre: Int) {
         page.value = page.value?.plus(1)
-        compositeDisposable.add(apiRepository.getDiscover(idGenre, page.value?.toInt()!!)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                loadMore.value = it.results
-            },{
-                error.value = it.message
-            }))
+        viewModelScope.launch {
+            runCatching {
+                loadMore.value = apiRepository.getDiscover(idGenre, page.value?.toInt()!!).results
+            }.onFailure(::handleFailure)
+        }
+    }
+
+    private fun handleFailure(throwable: Throwable) {
+        error.value = throwable.message
     }
 
     fun error() = error
     fun discover() = discover
     fun loadMoreDiscover() = loadMore
 
-    override fun onCleared() {
-        super.onCleared()
-        compositeDisposable.clear()
-    }
 }

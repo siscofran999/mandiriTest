@@ -1,33 +1,32 @@
 package com.siscofran.mandiri.ui.detail
 
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
+import com.siscofran.mandiri.BR
 import com.siscofran.mandiri.R
 import com.siscofran.mandiri.data.model.ResultY
-import kotlinx.android.synthetic.main.item_review.view.*
+import com.siscofran.mandiri.databinding.ItemReviewBinding
 
-class ReviewAdapter(private val result: ArrayList<ResultY>) : RecyclerView.Adapter<ReviewAdapter.ReviewHolder>() {
+class ReviewAdapter(private val result: ArrayList<ResultY>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReviewHolder =
-        ReviewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_review, parent, false))
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder =
+        ReviewHolder(DataBindingUtil.inflate<ItemReviewBinding>(LayoutInflater.from(parent.context),R.layout.item_review, parent, false))
 
     override fun getItemCount(): Int = result.size
 
-    override fun onBindViewHolder(holder: ReviewHolder, position: Int) = holder.bindReview(result[position])
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        (holder as ReviewHolder).binding.apply {
+            setVariable(BR.review, result[position])
+        }
+    }
 
     fun refreshAdapter(it: ArrayList<ResultY>) {
         result.addAll(it)
         notifyDataSetChanged()
     }
 
-    class ReviewHolder(view: View) : RecyclerView.ViewHolder(view) {
-
-        fun bindReview(resultY: ResultY) {
-            itemView.txv_author.text = resultY.author
-            itemView.txv_content.text = resultY.content
-        }
-
-    }
+    class ReviewHolder(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root)
 }

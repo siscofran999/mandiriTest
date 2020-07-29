@@ -2,58 +2,47 @@ package com.siscofran.mandiri.ui.detail
 
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.siscofran.mandiri.data.ApiRepository
 import com.siscofran.mandiri.data.model.Detail
-import com.siscofran.mandiri.data.model.ResultY
 import com.siscofran.mandiri.data.model.Reviews
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 class DetailViewModel @Inject constructor(private val apiRepository: ApiRepository) : ViewModel() {
 
-    private val compositeDisposable: CompositeDisposable = CompositeDisposable()
     private val error = MutableLiveData<String>()
     private val detail = MutableLiveData<Detail>()
     private val video = MutableLiveData<String>()
     private val reviews = MutableLiveData<Reviews>()
 
     fun getDetail(movieId: Int) {
-        compositeDisposable.add(apiRepository.getDetail(movieId)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                detail.value = it
-            },{
-                error.value = it.message
-            }))
+        viewModelScope.launch {
+            runCatching {
+                detail.value = apiRepository.getDetail(movieId)
+            }.onFailure(::handleFailure)
+        }
     }
 
     fun getVideo(movieId: Int) {
-        compositeDisposable.add(apiRepository.getVideos(movieId)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                if(it.results.isNotEmpty()){
-                    video.value = it.results[0].key
-                }else{
-                    video.value = ""
-                }
-            },{
-                error.value = it.message
-            }))
+        viewModelScope.launch {
+            runCatching {
+                video.value = apiRepository.getVideos(movieId).results[0].key
+            }.onFailure(::handleFailure)
+        }
     }
 
     fun getReview(movieId: Int) {
-        compositeDisposable.add(apiRepository.getReviews(movieId, 1)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                reviews.value = it
-            },{
-                error.value = it.message
-            }))
+        viewModelScope.launch {
+            runCatching {
+                reviews.value = apiRepository.getReviews(movieId, 1)
+            }.onFailure(::handleFailure)
+        }
+    }
+
+    private fun handleFailure(throwable: Throwable) {
+        error.value = throwable.message
     }
 
     fun detail() = detail
@@ -61,8 +50,4 @@ class DetailViewModel @Inject constructor(private val apiRepository: ApiReposito
     fun video() = video
     fun review() = reviews
 
-    override fun onCleared() {
-        super.onCleared()
-        compositeDisposable.clear()
-    }
 }
